@@ -1,0 +1,346 @@
+# Description of the podcast database API
+openapi: "3.0.0"
+info:
+    title: Podcast Database API
+    description: API for interacting with the Podcast Database. Specifically, getting data, suggesting improvements, and adding new timestamp entries.
+    version: "0.0.1"
+servers:
+    - url: https://api.vghddb.com
+paths:
+    /episodes:
+        get:
+            summary: List of available episodes
+            description: The episodes endpoint returns a list of EpisodeMetadata objects to the set of episodes which match the optional search parameters (or all episodes, if no search parameters are specified)
+            tags:
+                - Episodes
+            parameters:
+                -
+                    name: query
+                    in: query
+                    description: The name (or partial name) of an episode
+                    required: false
+                    schema:
+                        type: string
+                -
+                    name: start
+                    in: query
+                    description: The start of a date range to search. If no end date is specified, results will include everything after the start date.
+                    required: false
+                    schema:
+                        type: string
+                        format: date
+                -
+                    name: end
+                    in: query
+                    description: The end of a date range to search. If no start date is specified, results will include everything before the end date.
+                    required: false
+                    schema:
+                        type: string
+                        format: date
+            responses:
+                '200':
+                    description: The array of metadata for matching episodes.
+                    content:
+                        application/hal+json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/EpisodeMetadata'
+    /episodes/{episodeId}:
+        get:
+            summary: An episode's metadata.
+            description: The episode endpoint returns an EpisodeMetadata object, specified by the episodeId parameter.
+            tags:
+                - Episodes
+            parameters:
+                -
+                    name: episodeId
+                    in: path
+                    description: The id for which we want metadata.
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                '200':
+                    description: The  metadata for the episode.
+                    content:
+                        application/hal+json:
+                            schema:
+                                $ref: '#/components/schemas/EpisodeMetadata'
+                '400':
+                    $ref: '#/components/responses/NotFound'
+    /episodes/{episodeId}/clips:
+        get:
+            summary: An episode with all clips _embedded.
+            description: The episode clips endpoint returns an Episode object (which contains all the clip objects), specified by the episodeId parameter.
+            tags:
+                - Episodes
+                - Clips
+            parameters:
+                -
+                    name: episodeId
+                    in: path
+                    description: The id for which we want the clips.
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                '200':
+                    description: The episode and clips.
+                    content:
+                        application/hal+json:
+                            schema:
+                                $ref: '#/components/schemas/Episode'
+                '400':
+                    $ref: '#/components/responses/NotFound'
+    /episodes/{episodeId}/clips/{clipId}:
+        get:
+            summary: A clip object.
+            description: The clip endpoint returns an Clip object, specified by the episodeId and clipId parameters.
+            tags:
+                - Clips
+            parameters:
+                -
+                    name: episodeId
+                    in: path
+                    description: The episode id for which we want the clip.
+                    required: true
+                    schema:
+                        type: string
+                -
+                    name: clipId
+                    in: path
+                    description: The clip id for which we want the clip.
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                '200':
+                    description: The clip.
+                    content:
+                        application/hal+json:
+                            schema:
+                                $ref: '#/components/schemas/Clip'
+                '400':
+                    $ref: '#/components/responses/NotFound'
+    /topics:
+        get:
+            summary: List of available topics
+            description: The topics endpoint returns a list of TopicMetadata objects, optionally filtered by a search parameter.
+            tags:
+                - Topics
+            parameters:
+                -
+                    name: query
+                    in: query
+                    description: The name (or partial name) of a topic.
+                    required: false
+                    schema:
+                        type: string
+            responses:
+                '200':
+                    description: The array of metadata for matching topics.
+                    content:
+                        application/hal+json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/TopicMetadata'
+    /topics/{topicId}:
+        get:
+            summary: A topic's metadata.
+            description: The topic endpoint returns a TopicMetadata object, specified by the topic id.
+            tags:
+                - Topics
+            parameters:
+                -
+                    name: topicId
+                    in: path
+                    description: The id for which we want topic metadata.
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                '200':
+                    description: The metadata for the topic.
+                    content:
+                        application/hal+json:
+                            schema:
+                                $ref: '#/components/schemas/TopicMetadata'
+                '400':
+                    $ref: '#/components/responses/NotFound'
+    /topics/{topicId}/clips:
+        get:
+            summary: A topic with all clips _embedded
+            description: The topic clips endpoint returns a Topic object (which includes clips), specified by the topic id.
+            tags:
+                - Topics
+                - Clips
+            parameters:
+                -
+                    name: topicId
+                    in: path
+                    description: The id for which we want topic.
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                '200':
+                    description: The topic, with clips embedded.
+                    content:
+                        application/hal+json:
+                            schema:
+                                $ref: '#/components/schemas/Topic'
+                '400':
+                    $ref: '#/components/responses/NotFound'
+components:
+    schemas:
+        Clip:
+            type: object
+            properties:
+                episodeId:
+                    type: string
+                    description: The episode number of the episode containing the clip.
+                topicId:
+                    type: string
+                    description: The id of the topic discussed in the clip (for association with topic metadata)
+                topicName:
+                    type: string
+                    description: The name of the topic.
+                    readOnly: true
+                file:
+                    type: string
+                    format: url
+                    description: The URL of the audio file associated with the clip
+                start:
+                    type: integer
+                    format: int32
+                    description: The number of seconds into the audio file where the clip starts
+                end:
+                    type: integer
+                    format: int32
+                    description: The number of seconds into the audio file where the clip ends
+                _links:
+                    type: array
+                    description: An array of related links containing: self, episode, topic, audio
+                    items:
+                        $ref: '#/components/schemas/Link'
+            required:
+                - episodeId
+                - topicId
+                - file
+                - start
+                - end
+        Episode:
+            description: All information associated with this episode.
+            allOf:
+                -
+                    $ref: '#/components/schemas/EpisodeMetadata'
+                -
+                    type: object
+                    properties:
+                        _embedded:
+                            type: array
+                            items:
+                                $ref: '#/components/schemas/Clip'
+                    required:
+                        - _embedded
+        EpisodeMetadata:
+            type: object
+            description: Information about the episode, not including timestamps associated with the episode.
+            properties:
+                id:
+                    type: string
+                    description: The episode number of the specified episode.
+                name:
+                    type: string
+                    description: The name of the specified episode.
+                audio:
+                    type: string
+                    format: url
+                    writeOnly: true
+                    description: The URL for this episode's audio file. Must be specified when submitting in request, but will show up in the links array in future requests.
+                about:
+                    type: string
+                    format: url
+                    writeOnly: true
+                    description: URL to an about page for this episode (e.g. show notes). Must be specified when submitting in request, but will show up in the links array in future requests.
+                _links:
+                    type: array
+                    description: An array of related links containing: self, episode, clips, audio, about
+                    items:
+                        $ref: '#/components/schemas/Link'
+            required:
+                - id
+                - name
+                - audio
+        Link:
+            type: object
+            description: A link (as described by the HAL spec draft: https://tools.ietf.org/html/draft-kelly-json-hal-08)
+            properties:
+                href:
+                    type: string
+                    description: The URI or URI template of the linked resource
+                templated:
+                    type: boolean
+                    description: Should be specified to be true when the href is a template
+                    default: false
+                type:
+                    type: string
+                    format: mediatype
+                    description: The media type of the link response (e.g. "application/json")
+                deprecation:
+                    type: string
+                    format: url
+                    description: The presence of this property indicates this link will be removed at a later date. The value is a link to additional information about the deprecation.
+                name:
+                    type: string
+                    description: Optional secondary key for this link.
+                profile:
+                    type: string
+                    format: url
+                    description: Its value is a URI that hints about the profile of the target resource.
+                title:
+                    type: string
+                    description: Human-readable name for this link.
+                hreflang:
+                    type: string
+                    description: Optionally indicate the language used in the target resource.
+            required:
+                - href
+        Topic:
+            description: All information associated with this topic.
+            allOf:
+                -
+                    $ref: '#/components/schemas/TopicMetadata'
+                -
+                    type: object
+                    properties:
+                        _embedded:
+                            type: array
+                            items:
+                                $ref: '#/components/schemas/Clip'
+                    required:
+                        - _embedded
+        TopicMetadata:
+            type: object
+            description: A podcast topic.
+            properties:
+                id:
+                    type: string
+                    description: Unique identifier for each topic.
+                name:
+                    type: string
+                    description: Human-friendly topic name.
+                _links:
+                    type: array
+                    description: An array of related links containing: self, clips
+                    items:
+                        $ref: '#/components/schemas/Link'
+            required:
+                - id
+                - name
+    responses:
+        NotFound:
+            description: Resource not found.
+            content: The requested resource was not found or unavailable, and may not exist.
