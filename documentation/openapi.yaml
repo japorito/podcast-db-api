@@ -7,6 +7,34 @@ info:
 servers:
     - url: https://api.vghddb.com
 paths:
+    /:
+        get:
+            summary: Links to the various available operations.
+            description: An index with links to a number of API endpoints provided by this API. Exists to make API discoverable.
+            tags:
+                - Utility
+            responses:
+                '200':
+                    description: An index with links to a number of API endpoints provided by this API.
+                    content:
+                        application/hal+json:
+                            schema:
+                                type: object
+                                properties:
+                                    _links:
+                                        type: object
+                                        allOf:
+                                            -
+                                                $ref: '#/components/schemas/HALLinks'
+                                            -
+                                                type: object
+                                                properties:
+                                                    episodes:
+                                                        $ref: '#/components/schemas/Link'
+                                                    topics:
+                                                        $ref: '#/components/schemas/Link'
+                                                    suggestions:
+                                                        $ref: '#/components/schemas/Link'
     /episodes:
         get:
             summary: List of available episodes
@@ -37,15 +65,47 @@ paths:
                     schema:
                         type: string
                         format: date
+                -
+                    name: needsmetadata
+                    in: query
+                    description: Specify whether you want only episodes which are missing pieces of metadata (such as audio URL, show notes, or episode name) or all episodes.
+                    required: false
+                    schema:
+                        type: boolean
             responses:
                 '200':
                     description: The array of metadata for matching episodes.
                     content:
                         application/hal+json:
                             schema:
-                                type: array
-                                items:
-                                    $ref: '#/components/schemas/EpisodeMetadata'
+                                type: object
+                                description: HAL object with the list of episode metadata objects _embedded.
+                                properties:
+                                    _embedded:
+                                        type: object
+                                        properties:
+                                            episodes:
+                                                type: array
+                                                items:
+                                                    $ref: '#/components/schemas/EpisodeMetadata'
+                                    _links:
+                                        type: object
+                                        readOnly: true
+                                        properties:
+                                            self:
+                                                $ref: '#/components/schemas/Link'
+        post:
+            summary: Create or update one or more episodes.
+            description: Posting to the episodes endpoint creates EpisodeMetadata resources if they do not exist, and update resources if they do exist.
+            tags:
+                - Episodes
+            requestBody:
+                description: An array of episodes to create or update.
+                content:
+                    schema:
+                        type: array
+                        items:
+                            $ref: '#/components/schemas/EpisodeMetadata'
     /episodes/{episodeId}:
         get:
             summary: An episode's metadata.
@@ -137,15 +197,33 @@ paths:
                     required: false
                     schema:
                         type: string
+                -
+                    name: needsmetadata
+                    in: query
+                    description: Specifies whether you want to get only topics which are missing metadata (such as related links) or all matching topics.
+                    required: false
+                    schema:
+                        type: boolean
             responses:
                 '200':
                     description: The array of metadata for matching topics.
                     content:
                         application/hal+json:
                             schema:
-                                type: array
-                                items:
-                                    $ref: '#/components/schemas/TopicMetadata'
+                                type: object
+                                properties:
+                                    _embedded:
+                                        type: object
+                                        properties:
+                                            topics:
+                                                type: array
+                                                items:
+                                                    $ref: '#/components/schemas/TopicMetadata'
+                                    _links:
+                                        type: object
+                                        properties:
+                                            self:
+                                                $ref: '#/components/schemas/Link'
     /topics/{topicId}:
         get:
             summary: A topic's metadata.
@@ -268,8 +346,6 @@ components:
                     properties:
                         self:
                             $ref: '#/components/schemas/Link'
-                        episode:
-                            $ref: '#/components/schemas/Link'
                         clips:
                             $ref: '#/components/schemas/Link'
                         audio:
@@ -278,6 +354,12 @@ components:
                             $ref: '#/components/schemas/Link'
             required:
                 - id
+        HALLinks:
+            type: object
+            description: A _links schema including only the required 'self' link.
+            properties:
+                self:
+                    $ref: '#/components/schemas/Link'
         Link:
             type: object
             description: A link (as described by the HAL spec draft: https://tools.ietf.org/html/draft-kelly-json-hal-08)
