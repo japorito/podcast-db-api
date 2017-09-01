@@ -208,10 +208,6 @@ components:
                     type: string
                     description: The name of the topic.
                     readOnly: true
-                file:
-                    type: string
-                    format: url
-                    description: The URL of the audio file associated with the clip
                 start:
                     type: integer
                     format: int32
@@ -221,14 +217,20 @@ components:
                     format: int32
                     description: The number of seconds into the audio file where the clip ends
                 _links:
-                    type: array
-                    description: An array of related links containing: self, episode, topic, audio
-                    items:
-                        $ref: '#/components/schemas/Link'
+                    type: object
+                    description: A HAL _links object with links to self and the episode and topic related to this clip.
+                    properties:
+                        self:
+                            $ref: '#/components/schemas/Link'
+                        episode:
+                            $ref: '#/components/schemas/Link'
+                        topic:
+                            $ref: '#/components/schemas/Link'
+                        audio:
+                            $ref: '#/components/schemas/Link'
             required:
                 - episodeId
                 - topicId
-                - file
                 - start
                 - end
         Episode:
@@ -240,9 +242,14 @@ components:
                     type: object
                     properties:
                         _embedded:
-                            type: array
-                            items:
-                                $ref: '#/components/schemas/Clip'
+                            type: object
+                            description: A HAL _embedded object, containing a list of clips.
+                            properties:
+                                clips:
+                                    type: array
+                                    description: A list of clips in this episode.
+                                    items:
+                                        $ref: '#/components/schemas/Clip'
                     required:
                         - _embedded
         EpisodeMetadata:
@@ -255,25 +262,22 @@ components:
                 name:
                     type: string
                     description: The name of the specified episode.
-                audio:
-                    type: string
-                    format: url
-                    writeOnly: true
-                    description: The URL for this episode's audio file. Must be specified when submitting in request, but will show up in the links array in future requests.
-                about:
-                    type: string
-                    format: url
-                    writeOnly: true
-                    description: URL to an about page for this episode (e.g. show notes). Must be specified when submitting in request, but will show up in the links array in future requests.
                 _links:
-                    type: array
-                    description: An array of related links containing: self, episode, clips, audio, about
-                    items:
-                        $ref: '#/components/schemas/Link'
+                    type: object
+                    description: A HAL _links object with links to self and this episode's clips
+                    properties:
+                        self:
+                            $ref: '#/components/schemas/Link'
+                        episode:
+                            $ref: '#/components/schemas/Link'
+                        clips:
+                            $ref: '#/components/schemas/Link'
+                        audio:
+                            $ref: '#/components/schemas/Link'
+                        about:
+                            $ref: '#/components/schemas/Link'
             required:
                 - id
-                - name
-                - audio
         Link:
             type: object
             description: A link (as described by the HAL spec draft: https://tools.ietf.org/html/draft-kelly-json-hal-08)
@@ -317,9 +321,14 @@ components:
                     type: object
                     properties:
                         _embedded:
-                            type: array
-                            items:
-                                $ref: '#/components/schemas/Clip'
+                            type: object
+                            description: A HAL _embedded object, containing a list of clips.
+                            properties:
+                                clips:
+                                    type: array
+                                    description: A list of clips associated with this topic.
+                                    items:
+                                        $ref: '#/components/schemas/Clip'
                     required:
                         - _embedded
         TopicMetadata:
@@ -333,12 +342,18 @@ components:
                     type: string
                     description: Human-friendly topic name.
                 _links:
-                    type: array
-                    description: An array of related links containing: self, clips
-                    items:
-                        $ref: '#/components/schemas/Link'
+                    type: object
+                    description: A HAL _links object with links to self and this topic's clips
+                    properties:
+                        self:
+                            $ref: '#/components/schemas/Link'
+                        clips:
+                            $ref: '#/components/schemas/Link'
+                        related:
+                            type: array
+                            items:
+                                $ref: '#/components/schemas/Link'
             required:
-                - id
                 - name
     responses:
         NotFound:
