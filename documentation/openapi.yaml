@@ -102,10 +102,11 @@ paths:
             requestBody:
                 description: An array of episodes to create or update.
                 content:
-                    schema:
-                        type: array
-                        items:
-                            $ref: '#/components/schemas/EpisodeMetadata'
+                    application/json:
+                        schema:
+                            type: array
+                            items:
+                                $ref: '#/components/schemas/EpisodeMetadata'
     /episodes/{episodeId}:
         get:
             summary: An episode's metadata.
@@ -440,4 +441,3 @@ components:
     responses:
         NotFound:
             description: Resource not found.
-            content: The requested resource was not found or unavailable, and may not exist.
